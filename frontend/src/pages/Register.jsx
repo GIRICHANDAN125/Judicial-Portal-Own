@@ -220,7 +220,7 @@ const Register = () => {
                       onChange={handleChange}
                       className="w-full pl-12 pr-12 py-3.5 bg-black/40 border border-white/10 text-white text-sm font-medium rounded-xl focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all outline-none"
                       required
-                      minLength={8}
+                      minLength={3}
                       autoComplete="new-password"
                     />
                     <button

@@ -242,4 +242,26 @@ class CaseController extends Controller
             ],
         ]);
     }
+
+    public function publicShow($case_number)
+    {
+        $case = CaseModel::where('case_number', $case_number)->first();
+
+        if (!$case) {
+            return response()->json([
+                'message' => 'Case not found'
+            ], 404);
+        }
+
+        // Return only safe, public fields to protect privacy
+        return response()->json([
+            'case_number' => $case->case_number,
+            'title' => $case->title,
+            'case_type' => $case->case_type,
+            'status' => $case->status,
+            'priority' => $case->priority,
+            'filing_date' => $case->filing_date,
+            'next_hearing_date' => $case->next_hearing_date,
+        ]);
+    }
 }

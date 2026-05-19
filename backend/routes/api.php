@@ -21,6 +21,7 @@ use App\Http\Controllers\FirController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/public/cases/{case_number}', [CaseController::class, 'publicShow']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
