@@ -109,4 +109,35 @@ class AuthController extends Controller
             'user' => $request->user(),
         ]);
     }
+
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:3',
+            'id_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['No registered account matches this email address.'],
+            ]);
+        }
+
+        if ($request->hasFile('id_proof')) {
+            $path = $request->file('id_proof')->store('id_proofs', 'public');
+            $user->id_proof_path = $path;
+        }
+
+        $user->password = Hash::make($validated['password']);
+        $user->approval_status = 'pending';
+        $user->is_active = false;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password reset request submitted successfully. Account set to pending verification.',
+        ]);
+    }
 }

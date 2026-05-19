@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Judicial Portal - Case Management System</title>
     <script src="https://meet.jit.si/external_api.js" async></script>
-    <script type="module" crossorigin src="/assets/index-BAcMW-5B.js"></script>
+    <script type="module" crossorigin src="/assets/index-Q0FAETgQ.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-Dsvjhfrm.js">
-    <link rel="modulepreload" crossorigin href="/assets/ui-BDNZTAO_.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-RMvCbOGK.js">
     <link rel="modulepreload" crossorigin href="/assets/charts-BEXqDCZX.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-B90iNxLj.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BTSUHfw0.css">
   </head>
   <body>
     <div id="root"></div>

@@ -21,6 +21,7 @@ use App\Http\Controllers\FirController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::get('/public/cases/{case_number}', [CaseController::class, 'publicShow']);
 
 // Protected routes
