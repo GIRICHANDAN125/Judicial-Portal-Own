@@ -30,6 +30,7 @@ class User extends Authenticatable
         'court_id',
         'id_proof_path',
         'is_active',
+        'approval_status',
     ];
 
     protected $hidden = [

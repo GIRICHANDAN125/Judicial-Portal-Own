@@ -33,6 +33,7 @@ class AuthController extends Controller
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'bar_number' => $validated['bar_number'] ?? null,
+            'approval_status' => 'pending',
         ];
 
         if ($request->hasFile('id_proof')) {
@@ -64,6 +65,18 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        if ($user->approval_status === 'pending') {
+            return response()->json([
+                'message' => 'verification pending',
+            ], 403);
+        }
+
+        if ($user->approval_status === 'rejected') {
+            return response()->json([
+                'message' => 'verification failed',
+            ], 403);
         }
 
         if (!$user->is_active) {

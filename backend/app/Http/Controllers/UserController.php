@@ -156,4 +156,32 @@ class UserController extends Controller
 
         return response()->json($police);
     }
+
+    public function approve($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update([
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'User approved successfully',
+            'user' => $user,
+        ]);
+    }
+
+    public function reject($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update([
+            'approval_status' => 'rejected',
+            'is_active' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'User rejected successfully',
+            'user' => $user,
+        ]);
+    }
 }

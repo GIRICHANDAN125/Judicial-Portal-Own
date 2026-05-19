@@ -5,7 +5,7 @@ import Layout from '../components/common/Layout';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
-const UserRow = memo(({ userItem, onEdit, onDelete }) => (
+const UserRow = memo(({ userItem, onEdit, onDelete, onApprove, onReject }) => (
   <tr className="hover:bg-white/5 transition-colors border-b border-white/5 group">
     <td className="py-4 px-6">
       <div className="flex items-center gap-3">
@@ -50,6 +50,46 @@ const UserRow = memo(({ userItem, onEdit, onDelete }) => (
         <span className="text-xs text-gray-300 font-bold mt-1">
           {new Date(userItem.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
         </span>
+      </div>
+    </td>
+    <td className="py-4 px-6">
+      <div className="flex flex-col gap-2">
+        {userItem.approval_status === 'pending' ? (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => onApprove(userItem.id)}
+              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+            >
+              Approve
+            </button>
+            <button
+              onClick={() => onReject(userItem.id)}
+              className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+            >
+              Reject
+            </button>
+          </div>
+        ) : (
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+            userItem.approval_status === 'approved' 
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+          }`}>
+            {userItem.approval_status === 'approved' ? 'Approved' : 'Rejected'}
+          </span>
+        )}
+        
+        {userItem.id_proof_path && (
+          <a
+            href={userItem.id_proof_path.startsWith('http') ? userItem.id_proof_path : `${api.defaults.baseURL.replace('/api', '')}/storage/${userItem.id_proof_path}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            View ID Proof
+          </a>
+        )}
       </div>
     </td>
     <td className="py-4 px-6">
@@ -141,6 +181,24 @@ const Users = () => {
     }
   };
 
+  const handleApprove = async (id) => {
+    try {
+      await api.post(`/users/${id}/approve`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to approve user:', error);
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await api.post(`/users/${id}/reject`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to reject user:', error);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in relative z-10">
       {/* Header */}
@@ -225,6 +283,7 @@ const Users = () => {
                     <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Contact Points</th>
                     <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Authority Role</th>
                     <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Timeline</th>
+                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Verification Status</th>
                     <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Clearance</th>
                     <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] text-right">Operations</th>
                   </tr>
@@ -236,6 +295,8 @@ const Users = () => {
                       userItem={u} 
                       onEdit={(id) => navigate(`/users/${id}/edit`)}
                       onDelete={handleDelete}
+                      onApprove={handleApprove}
+                      onReject={handleReject}
                     />
                   ))}
                 </tbody>
