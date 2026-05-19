@@ -5,6 +5,19 @@ import Layout from '../components/common/Layout';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
+const getStorageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  
+  // Resolve base API URL (e.g. on Vercel to target Render domain)
+  const apiBase = import.meta.env.VITE_API_URL || '';
+  if (apiBase.startsWith('http')) {
+    return `${apiBase.replace('/api', '')}/storage/${path}`;
+  }
+  
+  return `/storage/${path}`;
+};
+
 const UserRow = memo(({ userItem, onEdit, onDelete, onApprove, onReject }) => (
   <tr className="hover:bg-white/5 transition-colors border-b border-white/5 group">
     <td className="py-4 px-6">
@@ -81,7 +94,7 @@ const UserRow = memo(({ userItem, onEdit, onDelete, onApprove, onReject }) => (
         
         {userItem.id_proof_path && (
           <a
-            href={userItem.id_proof_path.startsWith('http') ? userItem.id_proof_path : `${api.defaults.baseURL.replace('/api', '')}/storage/${userItem.id_proof_path}`}
+            href={getStorageUrl(userItem.id_proof_path)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors"
@@ -182,20 +195,48 @@ const Users = () => {
   };
 
   const handleApprove = async (id) => {
+    // ⚡ Optimistic UI Update: Instant response in 0ms!
+    setUsers(prevUsers => prevUsers.map(u => 
+      u.id === id ? { ...u, approval_status: 'approved', is_active: true } : u
+    ));
+    
     try {
       await api.post(`/users/${id}/approve`);
-      fetchUsers();
+      
+      // Update local storage cache to keep fast loads synced
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const updated = parsed.map(u => u.id === id ? { ...u, approval_status: 'approved', is_active: true } : u);
+        localStorage.setItem(cacheKey, JSON.stringify(updated));
+      }
     } catch (error) {
       console.error('Failed to approve user:', error);
+      // Revert if the server call fails
+      fetchUsers();
     }
   };
 
   const handleReject = async (id) => {
+    // ⚡ Optimistic UI Update: Instant response in 0ms!
+    setUsers(prevUsers => prevUsers.map(u => 
+      u.id === id ? { ...u, approval_status: 'rejected', is_active: false } : u
+    ));
+    
     try {
       await api.post(`/users/${id}/reject`);
-      fetchUsers();
+      
+      // Update local storage cache to keep fast loads synced
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const updated = parsed.map(u => u.id === id ? { ...u, approval_status: 'rejected', is_active: false } : u);
+        localStorage.setItem(cacheKey, JSON.stringify(updated));
+      }
     } catch (error) {
       console.error('Failed to reject user:', error);
+      // Revert if the server call fails
+      fetchUsers();
     }
   };
 

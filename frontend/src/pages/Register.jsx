@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Scale, User, Mail, Lock, Phone, AlertCircle, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 import bgImage from '../assets/images/supreme-court-bg.png';
 
 const Register = () => {
@@ -57,12 +58,12 @@ const Register = () => {
       }
     });
 
-    const result = await register(submitData);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    try {
+      await api.post('/register', submitData);
+      alert('Registration successful! Your account is currently pending verification. You can log in once approved by the administrator.');
+      navigate('/login');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed');
     }
     
     setLoading(false);
