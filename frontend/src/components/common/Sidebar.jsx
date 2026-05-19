@@ -42,7 +42,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client'] },
     { name: 'Police Dashboard', href: '/police-dashboard', icon: Shield, roles: ['police'] },
     { name: 'FIR Records', href: '/firs', icon: FileText, roles: ['police', 'judge', 'super_admin'] },
-    { name: 'Cases', href: '/cases', icon: Briefcase, roles: ['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client'] },
+    { name: 'Cases', href: '/cases', icon: Briefcase, roles: ['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client', 'police'] },
     { name: 'Hearings', href: '/hearings', icon: Calendar, roles: ['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client'] },
     { name: 'Documents', href: '/documents', icon: FileText, roles: ['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client'] },
     { name: 'Users', href: '/users', icon: Users, roles: ['super_admin'] },

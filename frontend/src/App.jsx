@@ -76,7 +76,7 @@ function App() {
               <Route
                 path="/cases"
                 element={
-                  <ProtectedRoute roles={['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client']}>
+                  <ProtectedRoute roles={['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client', 'police']}>
                     <Cases />
                   </ProtectedRoute>
                 }
@@ -92,7 +92,7 @@ function App() {
               <Route
                 path="/cases/:id"
                 element={
-                  <ProtectedRoute roles={['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client']}>
+                  <ProtectedRoute roles={['super_admin', 'court_admin', 'judge', 'lawyer', 'clerk', 'client', 'police']}>
                     <CaseDetail />
                   </ProtectedRoute>
                 }

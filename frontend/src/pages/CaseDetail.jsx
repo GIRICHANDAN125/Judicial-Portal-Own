@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Calendar, FileText, Clock, User, Scale, Download, ShieldCheck, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, FileText, Clock, User, Scale, Download, ShieldCheck, Trash2, Video } from 'lucide-react';
 import Layout from '../components/common/Layout';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -218,23 +218,33 @@ const CaseDetail = () => {
         {caseData.hearings && caseData.hearings.length > 0 ? (
           <div className="space-y-3">
             {caseData.hearings.map((hearing) => (
-              <Link
+              <div
                 key={hearing.id}
-                to={`/hearings/${hearing.id}`}
-                className="block p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all border border-white/5"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{hearing.hearing_number}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(hearing.hearing_date).toLocaleDateString()} at {hearing.hearing_time}
-                    </p>
-                  </div>
+                <div>
+                  <Link to={`/hearings/${hearing.id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-400">
+                    {hearing.hearing_number}
+                  </Link>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {new Date(hearing.hearing_date).toLocaleDateString()} at {hearing.hearing_time}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
                   <span className={`badge ${hearing.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>
                     {hearing.status}
                   </span>
+                  {hearing.is_online && hearing.status === 'scheduled' && (
+                    <Link
+                      to={`/video-court/${hearing.id}`}
+                      className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 transition-all"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      JOIN
+                    </Link>
+                  )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (
