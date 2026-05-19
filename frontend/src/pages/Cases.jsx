@@ -138,7 +138,7 @@ const Cases = () => {
   }, []);
 
   const isClient = user?.role === 'client';
-  const canCreate = ['super_admin', 'court_admin', 'clerk', 'judge'].includes(user?.role);
+  const canCreate = ['super_admin', 'court_admin', 'clerk'].includes(user?.role);
   const canEditDelete = ['super_admin', 'court_admin'].includes(user?.role);
 
   return (
