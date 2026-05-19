@@ -23,7 +23,7 @@ class UserController extends Controller
         }
 
         // Filter by role
-        if ($request->has('role')) {
+        if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 

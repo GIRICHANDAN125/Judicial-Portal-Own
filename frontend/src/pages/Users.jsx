@@ -153,12 +153,10 @@ const Users = () => {
   const cacheKey = `users_list_${currentUser?.id}`;
   const cachedData = localStorage.getItem(cacheKey);
 
-  const [users, setUsers] = useState(cachedData ? JSON.parse(cachedData) : []);
+  const [allUsers, setAllUsers] = useState(cachedData ? JSON.parse(cachedData) : []);
   const [loading, setLoading] = useState(!cachedData);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
   const roles = [
     { id: 'all', name: 'All Personnel', icon: UsersGroup },
@@ -168,85 +166,92 @@ const Users = () => {
     { id: 'police', name: 'Police', icon: Shield },
   ];
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (forceSilent = false) => {
+    if (!forceSilent) setLoading(true);
     try {
       const response = await api.get('/users', {
         params: {
-          page: currentPage,
-          search,
-          role: activeTab === 'all' ? '' : activeTab,
+          per_page: 1000 // Pull all personnel in a single high-speed fetch
         }
       });
-      setUsers(response.data.data);
-      localStorage.setItem(cacheKey, JSON.stringify(response.data.data));
-      setPagination({
-        currentPage: response.data.current_page,
-        lastPage: response.data.last_page,
-        total: response.data.total,
-      });
+      const data = response.data.data || [];
+      setAllUsers(data);
+      localStorage.setItem(cacheKey, JSON.stringify(data));
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
-      setLoading(false);
+      if (!forceSilent) setLoading(false);
     }
-  }, [currentPage, search, activeTab, cacheKey]);
+  }, [cacheKey]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // ⚡ High-Speed 0ms In-Memory search & filter resolution
+  const filteredUsers = React.useMemo(() => {
+    return allUsers.filter(u => {
+      // 1. Role Filter
+      if (activeTab !== 'all' && u.role !== activeTab) {
+        return false;
+      }
+      
+      // 2. Search Filter
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        return (
+          (u.name && u.name.toLowerCase().includes(query)) ||
+          (u.email && u.email.toLowerCase().includes(query)) ||
+          (u.phone && u.phone.toLowerCase().includes(query)) ||
+          (u.role && u.role.toLowerCase().includes(query))
+        );
+      }
+      
+      return true;
+    });
+  }, [allUsers, activeTab, search]);
+
   const handleDelete = async (id) => {
     if (!window.confirm('CRITICAL ACTION: Are you sure you want to permanently delete this user record? This cannot be undone.')) return;
+    
+    // Optimistic UI Update
+    setAllUsers(prev => prev.filter(u => u.id !== id));
+    
     try {
       await api.delete(`/users/${id}`);
-      fetchUsers();
+      fetchUsers(true); // Silent background sync
     } catch (error) {
       console.error('Failed to delete user:', error);
+      fetchUsers();
     }
   };
 
   const handleApprove = async (id) => {
     // ⚡ Optimistic UI Update: Instant response in 0ms!
-    setUsers(prevUsers => prevUsers.map(u => 
+    setAllUsers(prevUsers => prevUsers.map(u => 
       u.id === id ? { ...u, approval_status: 'approved', is_active: true } : u
     ));
     
     try {
       await api.post(`/users/${id}/approve`);
-      
-      // Update local storage cache to keep fast loads synced
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        const updated = parsed.map(u => u.id === id ? { ...u, approval_status: 'approved', is_active: true } : u);
-        localStorage.setItem(cacheKey, JSON.stringify(updated));
-      }
+      fetchUsers(true); // Silent background sync
     } catch (error) {
       console.error('Failed to approve user:', error);
-      // Revert if the server call fails
       fetchUsers();
     }
   };
 
   const handleReject = async (id) => {
     // ⚡ Optimistic UI Update: Instant response in 0ms!
-    setUsers(prevUsers => prevUsers.map(u => 
+    setAllUsers(prevUsers => prevUsers.map(u => 
       u.id === id ? { ...u, approval_status: 'rejected', is_active: false } : u
     ));
     
     try {
       await api.post(`/users/${id}/reject`);
-      
-      // Update local storage cache to keep fast loads synced
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        const updated = parsed.map(u => u.id === id ? { ...u, approval_status: 'rejected', is_active: false } : u);
-        localStorage.setItem(cacheKey, JSON.stringify(updated));
-      }
+      fetchUsers(true); // Silent background sync
     } catch (error) {
       console.error('Failed to reject user:', error);
-      // Revert if the server call fails
       fetchUsers();
     }
   };
@@ -281,7 +286,6 @@ const Users = () => {
               key={role.id}
               onClick={() => {
                 setActiveTab(role.id);
-                setCurrentPage(1);
               }}
               className={`flex items-center gap-2 px-6 py-4 rounded-t-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
                 activeTab === role.id 
@@ -317,7 +321,7 @@ const Users = () => {
             <div className="h-14 w-14 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.5em] mt-8 animate-pulse">Syncing Registry...</p>
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="p-32 text-center">
             <div className="h-20 w-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-white/5">
               <UserIcon className="h-10 w-10 text-gray-700" />
@@ -326,63 +330,33 @@ const Users = () => {
             <p className="text-gray-500 mt-2 font-bold max-w-xs mx-auto">No identity records match the current filter criteria.</p>
           </div>
         ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-white/5 border-b border-white/10">
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Identity / Credentials</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Contact Points</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Authority Role</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Timeline</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Verification Status</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Clearance</th>
-                    <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] text-right">Operations</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {users.map((u) => (
-                    <UserRow 
-                      key={u.id} 
-                      userItem={u} 
-                      onEdit={(id) => navigate(`/users/${id}/edit`)}
-                      onDelete={handleDelete}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {pagination && pagination.lastPage > 1 && (
-              <div className="p-8 flex flex-col sm:flex-row items-center justify-between bg-black/20 gap-6">
-                <div className="flex flex-col">
-                  <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Registry Coverage</p>
-                  <p className="text-sm font-bold text-gray-400 mt-1">
-                    Viewing {((currentPage - 1) * 15) + 1} - {Math.min(currentPage * 15, pagination.total)} of {pagination.total} records
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="px-8 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all border border-white/10"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(pagination.lastPage, prev + 1))}
-                    disabled={currentPage === pagination.lastPage}
-                    className="px-8 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-20 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all shadow-xl shadow-primary-600/30"
-                  >
-                    Next Page
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/10">
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Identity / Credentials</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Contact Points</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Authority Role</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Timeline</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Verification Status</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Clearance</th>
+                  <th className="py-6 px-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] text-right">Operations</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredUsers.map((u) => (
+                  <UserRow 
+                    key={u.id} 
+                    userItem={u} 
+                    onEdit={(id) => navigate(`/users/${id}/edit`)}
+                    onDelete={handleDelete}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
