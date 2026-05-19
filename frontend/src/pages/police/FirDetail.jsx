@@ -301,9 +301,15 @@ const FirDetail = () => {
                 <h3 className="font-black text-white uppercase tracking-widest text-sm">Case Referred</h3>
               </div>
               <p className="text-sm text-gray-400 mb-6 leading-relaxed">This FIR has been officially converted into a judicial proceeding.</p>
-              <Link to={`/cases/${fir.linked_case_id}`} className="flex items-center justify-center w-full px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-primary-500/20">
-                VIEW COURT CASE
-              </Link>
+              {user?.role === 'police' ? (
+                <Link to="/hearings" className="flex items-center justify-center w-full px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-primary-500/20">
+                  VIEW COURT HEARINGS
+                </Link>
+              ) : (
+                <Link to={`/cases/${fir.linked_case_id}`} className="flex items-center justify-center w-full px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-primary-500/20">
+                  VIEW COURT CASE
+                </Link>
+              )}
             </div>
           ) : (
             canManageFir && fir.status === 'investigating' && (
