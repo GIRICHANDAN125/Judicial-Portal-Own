@@ -23,6 +23,11 @@ const Register = () => {
   const handleChange = (e) => {
     if (e.target.type === 'file') {
       setFormData({ ...formData, [e.target.name]: e.target.files[0] });
+    } else if (e.target.name === 'phone') {
+      const val = e.target.value.replace(/[^0-9]/g, '');
+      if (val.length <= 10) {
+        setFormData({ ...formData, [e.target.name]: val });
+      }
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -34,6 +39,11 @@ const Register = () => {
     
     if (formData.password !== formData.password_confirmation) {
       setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.phone.length !== 10) {
+      setError('Mobile number must be exactly 10 digits and contain only numbers');
       return;
     }
 
@@ -164,6 +174,8 @@ const Register = () => {
                       onChange={handleChange}
                       className="w-full pl-12 pr-4 py-3.5 bg-black/40 border border-white/10 text-white text-sm font-medium rounded-xl focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all outline-none"
                       autoComplete="off"
+                      required
+                      pattern="[0-9]{10}"
                     />
                   </div>
                 </div>

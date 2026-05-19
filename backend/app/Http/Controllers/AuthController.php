@@ -16,10 +16,13 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:3|confirmed',
             'role' => 'required|in:judge,police,lawyer,client',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'address' => 'nullable|string',
             'bar_number' => 'nullable|string',
             'id_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // Increased to 5MB
+        ], [
+            'phone.required' => 'The mobile number is required.',
+            'phone.regex' => 'The mobile number must be exactly 10 digits and contain only numbers.',
         ]);
 
         $userData = [
