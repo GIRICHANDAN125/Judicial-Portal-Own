@@ -9,13 +9,24 @@ const getStorageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   
-  // Resolve base API URL (e.g. on Vercel to target Render domain)
+  // 1. Try resolving using VITE_API_URL env var
   const apiBase = import.meta.env.VITE_API_URL || '';
   if (apiBase.startsWith('http')) {
     return `${apiBase.replace('/api', '')}/storage/${path}`;
   }
   
-  return `/storage/${path}`;
+  // 2. If running on Vercel, route directly to the live Render storage server
+  if (window.location.hostname.includes('vercel.app')) {
+    return `https://judicial-portal-api.onrender.com/storage/${path}`;
+  }
+  
+  // 3. If running on unified server (Render directly)
+  if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+    return `${window.location.origin}/storage/${path}`;
+  }
+  
+  // 4. Local dev environment fallback
+  return `http://127.0.0.1:8000/storage/${path}`;
 };
 
 const UserRow = memo(({ userItem, onEdit, onDelete, onApprove, onReject }) => (
